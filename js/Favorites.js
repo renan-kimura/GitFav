@@ -15,33 +15,40 @@ export class Favorites {
     constructor(root) {
         this.root = document.querySelector(root)
         this.load()
-        GithubUser.search('renan-kimura').then(user => console.log(user))
+        GithubUser.search('diego3g')
+            .then(user => console.log(user))
     }
 
     load() {
         this.entries = JSON.parse(localStorage.getItem('@github-favorites:')) || []
         console.log(this.entries);
-
-        // this.entries = [{
-        //     login: 'maykbrito',
-        //     name: 'Mayk Brito',
-        //     public_repos: '76',
-        //     followers: '9589'
-        // },
-        // {
-        //     login: 'diego3g',
-        //     name: 'Diego Fernandes',
-        //     public_repos: '48',
-        //     followers: '22503'
-        // },
-        // ]
     }
+    save(){
+        localStorage.setItem('@github-favorites:', JSON.stringify(this.entries))
+    }
+    async add(username){
+        try{
+            const user = await GithubUser.search(username)
+            console.log(user)
+
+            if(user.login === undefined){
+                throw new Error('Usuário não encontrado')
+            }
+            this.entries = [user, ...this.entries]
+            this.update()
+            this.save()
+        }catch(error){
+            alert(error.message)
+        }
+    }
+
     delete(user) {
         const filteredENtries = this.entries
             .filter(entry => entry.login !== user.login)
 
         this.entries = filteredENtries
         this.update()
+        this.save()
     }
 }
 
@@ -52,8 +59,15 @@ export class FavoritesView extends Favorites {
         this.tbody = this.root.querySelector('table tbody')
 
         this.update()
+        this.onadd()
     }
-    
+    onadd(){
+        const addButton = this.root.querySelector('.search button')
+        addButton.onclick = () => {
+            const { value } = this.root.querySelector('.search input')
+            this.add(value)
+        }
+    }
     update() {
         this.removeAllTr()
         
